@@ -1,0 +1,123 @@
+#pygame snake
+
+import random
+import pygame
+import math
+#from pygame import mixer
+
+pygame.init()   # initialize
+#mixer.init()    # initialize sound
+
+screen = pygame.display.set_mode((730, 600))    # set size of screen
+pygame.display.set_caption('Snake Game')        # set title
+backGroundColor=pygame.Color("orange")          # set
+#bg = pygame.image.load("snake_bg.jpg")
+#mixer.music.load("background_music.mp3")
+#mixer.music.play(-1)    # to run continously
+
+color = (64, 3, 38)
+length = 1                 # initial length of player
+player_x = [365] * length    # array to store x values of player   365 = initial position of x
+player_y = [500] * length    # array to store x values of player   500 = initial position of y
+player_x_change = 0
+player_y_change = 0
+player_size = 40            # height n width
+
+def draw_player(x, y, s, length):        # takes player_X , player_Y, player_size,length as i/p parameters
+    for i in range(0, length):          # loop to draw snake of variable length
+        pygame.draw.rect(screen, color, pygame.Rect(x[i], y[i], s, s), 0, 18)
+
+food_centre_x = []
+food_centre_y = []
+for i in range(0, 3):
+    food_centre_x.append(random.randint(50,600))       #set borders for food appearing on x-axis
+    food_centre_y.append(random.randint(50,500))       #set borders for food appearing on y-axis
+food_radius = 15                                             # food size
+
+def food(c1, c2, r):          # takes food_center_X , food_center_Y, food_radius as i/p parameters
+    pygame.draw.circle(screen,(235, 0, 0),(c1, c2), r)
+    pygame.draw.circle(screen, (0,0,0), (c1, c2), r, 2)    # border for food (optional)
+
+def isCollision(x1, x2, y1, y2):
+    distance = math.sqrt((math.pow(x1-x2,2))+(math.pow(y1-y2,2)))
+    return distance
+
+def snake_grow():       # to increase size of player_X and player_Y array
+    player_x.append(1000)
+    player_y.append(1000)
+
+score=0
+font = pygame.font.Font("freesansbold.ttf",32)
+font1 = pygame.font.Font("freesansbold.ttf",82)
+#play = False
+def show_score(score):
+    score_text = font.render("Score: "+str(score), True, (255, 255, 255))
+    screen.blit(score_text,(10, 10))
+
+def game_over():
+    game_over_font = font1.render("Game Over", True, (255, 255, 255))
+    screen.blit(game_over_font, (140, 250))
+    for i in range(0, 3):      # get food out of range
+        food_centre_x[i] = 1000
+        food_centre_y[i] = 1000
+
+running = True
+while running:
+    screen.fill(backGroundColor)
+    #screen.blit(bg, (0, 0))
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_UP:
+                player_y_change -= 25
+            if event.key == pygame.K_DOWN:
+                player_y_change += 25
+            if event.key == pygame.K_RIGHT:
+                player_x_change += 25
+            if event.key == pygame.K_LEFT:
+                player_x_change -= 25
+
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_RIGHT or event.key == pygame.K_LEFT:
+                player_x_change = 0
+            if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
+                player_y_change = 0
+
+            for i in range(length - 1, 0, -1):      # to give flexible movement to snake
+                player_x[i] = player_x[i - 1]       # every x value will takes its previous x value  eg: x[1] =x[0]
+                player_y[i] = player_y[i - 1]       # every y value will takes its previous y value  eg: y[1] =y[0]
+
+        for i in range(0, 1):                   #apply x change and y change to player
+            player_x[0] += player_x_change
+            player_y[0] += player_y_change
+
+    for i in range(0, 1):                # add window boundary to player
+        if player_x[0] < 0:
+            player_x[0] = 699
+        if player_x[0] >= 700:
+            player_x[0] = 1
+        if player_y[0] <= 0:
+            player_y[0] = 569
+        if player_y[0] >= 570:
+            player_y[0] = 1
+
+    for i in range(2, length):            # check collision between snake head and snake body
+        die = isCollision(player_x[0], player_x[i], player_y[0], player_y[i])
+        if die < 5:
+            game_over()
+
+    for i in range(0, 3):
+        food(food_centre_x[i], food_centre_y[i], food_radius)   # draw food on screen
+        col = isCollision(player_x[0] + 20, food_centre_x[i], player_y[0] + 20, food_centre_y[i]) # check collision between snake and food
+        if col < 10:
+            length += 1
+            snake_grow()
+            score += 1
+            food_centre_x[i] = random.randint(50, 600)
+            food_centre_y[i] = random.randint(50, 500)
+            food(food_centre_x[i], food_centre_y[i], food_radius)
+
+    draw_player(player_x, player_y, player_size, length)
+    show_score(score)
+    pygame.display.update()
